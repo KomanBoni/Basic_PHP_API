@@ -1,28 +1,20 @@
 <?php
-/**
- * Script de migration pour créer la table `films`
- * Adapter les valeurs ci-dessous selon votre environnement.
- */
 
-$host = "localhost";
-$dbname = "ma_base";      // Nom de la base à créer ou déjà existante
-$user = "root";
-$pass = "";
-$charset = "utf8mb4";
+$host = $_ENV['DB_HOST'];
+$dbname = $_ENV['DB_DATABASE'];
+$user = $_ENV['DB_USERNAME'];
+$pass = $_ENV['DB_PASSWORD'];
+$charset = $_ENV['DB_CHARSET'];
 
 try {
-    // Connexion au serveur MySQL (sans base)
     $pdo = new PDO("mysql:host=$host;charset=$charset", $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Création de la base si elle n'existe pas
     $pdo->exec("CREATE DATABASE IF NOT EXISTS `$dbname` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
 
-    // Connexion à la base créée
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=$charset", $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Création de la table
     $sql = "
         CREATE TABLE IF NOT EXISTS films (
             id_film INT AUTO_INCREMENT PRIMARY KEY,
