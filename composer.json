@@ -1,0 +1,9 @@
+{
+    "name": "mac-ihanfa18/basic_php_api",
+    "autoload": {
+        "psr-4": {
+            "MacIhanfa18\\BasicPhpApi\\": "src/"
+        }
+    },
+    "require": {}
+}
