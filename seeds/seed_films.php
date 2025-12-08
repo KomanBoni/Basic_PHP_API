@@ -4,11 +4,11 @@
  * Adapter les valeurs ci-dessous selon votre environnement.
  */
 
-$host = "localhost";
-$dbname = "ma_base";      // Nom de la base (identique à la migration)
-$user = "root";
-$pass = "";
-$charset = "utf8mb4";
+$host = $_ENV['DB_HOST'];
+$dbname = $_ENV['DB_DATABASE'];
+$user = $_ENV['DB_USERNAME'];
+$pass = $_ENV['DB_PASSWORD'];
+$charset = $_ENV['DB_CHARSET'];
 
 try {
     // Connexion à la base de données
