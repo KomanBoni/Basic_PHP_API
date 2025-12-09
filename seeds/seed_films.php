@@ -4,20 +4,20 @@
  * Adapter les valeurs ci-dessous selon votre environnement.
  */
 
-$host = $_ENV['DB_HOST'];
-$dbname = $_ENV['DB_DATABASE'];
-$user = $_ENV['DB_USERNAME'];
-$pass = $_ENV['DB_PASSWORD'];
-$charset = $_ENV['DB_CHARSET'];
+$host = $_ENV['DB_HOST'] ?? '127.0.0.1';
+$port = $_ENV['DB_PORT'] ?? '5432';
+$dbname = $_ENV['DB_DATABASE'] ?? 'anasch_film';
+$user = $_ENV['DB_USERNAME'] ?? 'postgres';
+$pass = $_ENV['DB_PASSWORD'] ?? 'KomanKali12';
 
 try {
     // Connexion à la base de données
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=$charset", $user, $pass);
+    $pdo = new PDO("pgsql:host=$host;port=$port;dbname=$dbname", $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // Vérifier si la table existe
-    $stmt = $pdo->query("SHOW TABLES LIKE 'films'");
-    if ($stmt->rowCount() == 0) {
+    $stmt = $pdo->query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'films')");
+    if (!$stmt->fetchColumn()) {
         echo "Erreur : La table 'films' n'existe pas. Veuillez d'abord exécuter la migration.\n";
         exit(1);
     }

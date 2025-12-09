@@ -1,14 +1,16 @@
 <?php
 
+require_once __DIR__ . '/../vendor/autoload.php';
+
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
 header("Content-Type: application/json; charset=utf-8");
 
-// Connexion à MySQL (Docker local)
-$dsn = "mysql:host=127.0.0.1:3306;dbname=anasch_film;charset=utf8mb4";
-$username = "root";
-$password = "root";
+// Connexion à PostgreSQL
+$dsn = "pgsql:host=127.0.0.1;port=5432;dbname=anasch_film";
+$username = "postgres";
+$password = "KomanKali12";
 
 try {
     $pdo = new PDO($dsn, $username, $password);
@@ -81,7 +83,7 @@ if ($uri === '/login' && $method === 'POST') {
     $password = $data['password'];
 
     try {
-        $sql = "SELECT * FROM user WHERE email = :email";
+        $sql = "SELECT * FROM users WHERE email = :email";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':email', $email, PDO::PARAM_STR);
         $stmt->execute();
@@ -133,8 +135,11 @@ if ($uri === '/login' && $method === 'POST') {
 // ======================
 
 // ------ ROUTE GET /films/:genre ------
-if (preg_match('/^\/films\/([a-zA-Z0-9_-]+)$/', $uri, $matches) && $method === 'GET') {
-    $genre = $matches[1];
+if (preg_match('/^\/films\/(.+)$/', $uri, $matches) && $method === 'GET') {
+    // 🔐 route protégée par JWT
+    $authUserId = getAuthenticatedUserId($jwt_secret);
+    
+    $genre = urldecode($matches[1]);
 
     $sql = "SELECT * FROM films WHERE genre = :genre";
 
@@ -161,8 +166,11 @@ if (preg_match('/^\/films\/([a-zA-Z0-9_-]+)$/', $uri, $matches) && $method === '
 
 // ------ ROUTE GET /films ------
 if ($uri === '/films' && $method === 'GET') {
+    // 🔐 route protégée par JWT
+    $authUserId = getAuthenticatedUserId($jwt_secret);
+    
     try {
-        $stmt = $pdo->query("SELECT * FROM film"); // vérifie le nom de ta table: film ou films ?
+        $stmt = $pdo->query("SELECT * FROM films");
         $films = $stmt->fetchAll(PDO::FETCH_ASSOC);
         echo json_encode($films);
     } catch (PDOException $e) {
@@ -184,7 +192,7 @@ if (preg_match('/^\/user\/(\d+)$/', $uri, $matches) && $method === 'GET') {
     $userId = (int)$matches[1];
 
     try {
-        $sql = "SELECT id, name, email FROM user WHERE id = :id";
+        $sql = "SELECT id, name, email FROM users WHERE id = :id";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':id', $userId, PDO::PARAM_INT);
         $stmt->execute();
@@ -212,7 +220,7 @@ if ($uri === '/users' && $method === 'GET') {
     $authUserId = getAuthenticatedUserId($jwt_secret);
 
     try {
-        $sql = "SELECT id, name, email FROM user";
+        $sql = "SELECT id, name, email FROM users";
         $stmt = $pdo->query($sql);
         $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
         echo json_encode($users);
@@ -255,15 +263,14 @@ if ($uri === '/users' && $method === 'POST') {
     $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
     try {
-        $sql = "INSERT INTO user (name, email, password) VALUES (:name, :email, :password)";
+        $sql = "INSERT INTO users (name, email, password) VALUES (:name, :email, :password) RETURNING id";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':name', $name, PDO::PARAM_STR);
         $stmt->bindParam(':email', $email, PDO::PARAM_STR);
         $stmt->bindParam(':password', $passwordHash, PDO::PARAM_STR);
         $stmt->execute();
 
-        $userId = $pdo->lastInsertId();
-        echo ("ok");
+        $userId = $stmt->fetchColumn();
         
         http_response_code(201);
         echo json_encode([
@@ -273,7 +280,8 @@ if ($uri === '/users' && $method === 'POST') {
         ]);
 
     } catch (PDOException $e) {
-        if ($e->getCode() == 23000) { // contrainte unique (email déjà utilisé ?)
+        // Code d'erreur PostgreSQL pour violation de contrainte unique
+        if ($e->getCode() == '23505') {
             http_response_code(409);
             echo json_encode(['error' => 'Email déjà utilisé']);
         } else {

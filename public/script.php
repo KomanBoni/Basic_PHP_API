@@ -1,7 +1,7 @@
 <?php
-$dsn = "mysql:host=127.0.0.1;dbname=anasch_film;charset=utf8mb4";
-$username = "root";
-$password = "root";
+$dsn = "pgsql:host=127.0.0.1;port=5432;dbname=anasch_film";
+$username = "postgres";
+$password = "KomanKali12";
 
 try {
     $pdo = new PDO($dsn, $username, $password);
