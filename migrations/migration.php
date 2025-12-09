@@ -30,6 +30,21 @@ try {
 
     echo "Migration effectuée avec succès : table 'films' créée.\n";
 
+    $sqlUsers = "
+        CREATE TABLE IF NOT EXISTS users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            email VARCHAR(255) NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            token VARCHAR(255) NULL,
+            INDEX idx_email (email)
+        ) ENGINE=InnoDB;
+    ";
+
+    $pdo->exec($sqlUsers);
+
+    echo "Migration effectuée avec succès : table 'users' créée.\n";
+
 } catch (PDOException $e) {
     echo "Erreur : " . $e->getMessage();
 }
